@@ -1,0 +1,23 @@
+const express = require('express')
+const httpProxy = require('http-proxy')
+const app = express()
+const proxy = httpProxy.createProxy()
+const PORT = 8000
+const ROOT_PATH = 'https://vercel-clone-outputs.s3.ca-central-1.amazonaws.com/__outputs'
+
+app.use((req,res) => {
+    const hostname = req.hostname;
+    const subdomain = hostname.split('.')[0]
+
+    const resolvesTo = `${ROOT_PATH}/${subdomain}`
+
+    return proxy.web(req, res, { target: resolvesTo, changeOrigin: true})
+})
+
+proxy.on('proxyReq', (proxyReq, req, res) => {
+    const url = req.url;
+    if (url === '/')
+        proxyReq.path += 'index.html'
+})
+
+app.listen(PORT, () => console.log(`Reverse proxy initalized on port  ${PORT}`))
